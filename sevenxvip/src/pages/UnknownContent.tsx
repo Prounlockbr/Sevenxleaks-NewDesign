@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
-import { HelpCircle, Eye } from "lucide-react";
+import { HelpCircle, Eye, Globe, MapPin } from "lucide-react";
 import { useTheme } from "../contexts/ThemeContext";
 import { motion } from "framer-motion";
 import { Helmet } from "react-helmet";
@@ -23,6 +23,14 @@ type LinkItem = {
   createdAt: string;
   region: string;
   contentType?: string;
+  link?: string;
+  link2?: string;
+  linkP?: string;
+  linkG?: string;
+  linkMV1?: string;
+  linkMV2?: string;
+  linkMV3?: string;
+  linkMV4?: string;
 };
 
 const UnknownContent: React.FC = () => {
@@ -40,6 +48,7 @@ const UnknownContent: React.FC = () => {
   const [totalPages, setTotalPages] = useState(1);
   const { theme } = useTheme();
   const isDark = theme === "dark";
+  const [selectedRegion, setSelectedRegion] = useState<string>("");
 
   function decodeModifiedBase64<T>(encodedStr: string): T {
     const fixedBase64 = encodedStr.slice(0, 2) + encodedStr.slice(3);
@@ -60,6 +69,7 @@ const UnknownContent: React.FC = () => {
       });
 
       if (searchName) params.append("search", searchName);
+      if (selectedRegion) params.append("region", selectedRegion);
       if (selectedMonth) params.append("month", selectedMonth);
 
       const response = await axios.get(
@@ -105,7 +115,7 @@ const UnknownContent: React.FC = () => {
     }, 300);
     return () => clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchName, selectedMonth, sortOption]);
+  }, [searchName, selectedMonth, sortOption, selectedRegion]);
 
   const handleLoadMore = () => {
     if (loadingMore || currentPage >= totalPages) return;
@@ -229,6 +239,43 @@ const UnknownContent: React.FC = () => {
 
               {/* Filters */}
               <div className="flex items-center gap-2">
+                {/* Region Filter */}
+                <div className="flex items-center gap-1 bg-gray-800/50 rounded-lg p-1">
+                  <button
+                    onClick={() => setSelectedRegion("")}
+                    className={`px-3 py-2 rounded-md text-sm font-medium transition-all duration-200 flex items-center gap-2 ${
+                      selectedRegion === ""
+                        ? "bg-slate-500 text-white shadow-lg"
+                        : "text-gray-300 hover:text-white hover:bg-gray-700/50"
+                    }`}
+                  >
+                    <Globe className="w-4 h-4" />
+                    All
+                  </button>
+                  <button
+                    onClick={() => setSelectedRegion("western")}
+                    className={`px-3 py-2 rounded-md text-sm font-medium transition-all duration-200 flex items-center gap-2 ${
+                      selectedRegion === "western"
+                        ? "bg-orange-500 text-white shadow-lg"
+                        : "text-gray-300 hover:text-white hover:bg-gray-700/50"
+                    }`}
+                  >
+                    <Globe className="w-4 h-4" />
+                    Western
+                  </button>
+                  <button
+                    onClick={() => setSelectedRegion("asian")}
+                    className={`px-3 py-2 rounded-md text-sm font-medium transition-all duration-200 flex items-center gap-2 ${
+                      selectedRegion === "asian"
+                        ? "bg-purple-500 text-white shadow-lg"
+                        : "text-gray-300 hover:text-white hover:bg-gray-700/50"
+                    }`}
+                  >
+                    <MapPin className="w-4 h-4" />
+                    Asian
+                  </button>
+                </div>
+
                 <div className="month-filter-container relative z-50">
                   <MonthFilter selectedMonth={selectedMonth} onMonthChange={setSelectedMonth} themeColor="slate" />
                 </div>
@@ -315,7 +362,7 @@ const UnknownContent: React.FC = () => {
                             >
                               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                                 <div className="flex items-center gap-2 sm:gap-4 flex-1 min-w-0">
-                                  {link.contentType && (
+                                  {link.contentType && link.contentType !== "unknown" && (
                                     <div
                                       className={`w-2 h-2 rounded-full ${
                                         link.contentType === "asian"
@@ -351,7 +398,7 @@ const UnknownContent: React.FC = () => {
                                 </div>
 
                                 <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
-                                  {recentLinks.includes(link) && (
+                                  {recentIds.has(link.id) && (
                                     <span
                                       className={`inline-flex items-center px-2 sm:px-4 py-1 sm:py-2 text-white text-xs font-bold rounded-full shadow-lg animate-pulse border font-roboto ${
                                         isDark
@@ -363,7 +410,9 @@ const UnknownContent: React.FC = () => {
                                       NEW
                                     </span>
                                   )}
-                                  {link.contentType && (
+                                  
+                                  {/* Origin Badge */}
+                                  {link.contentType && link.contentType !== "unknown" && (
                                     <span
                                       className={`inline-flex items-center px-3 py-1 text-xs font-bold rounded-full ${
                                         link.contentType === "asian"
@@ -374,14 +423,16 @@ const UnknownContent: React.FC = () => {
                                           ? "bg-red-500/20 text-red-300 border border-red-500/30"
                                           : link.contentType === "vip"
                                           ? "bg-yellow-500/20 text-yellow-300 border border-yellow-500/30"
-                                          : link.contentType === "unknown"
-                                          ? "bg-gray-500/20 text-gray-300 border border-gray-500/30"
                                           : ""
                                       }`}
                                     >
-                                      {link.contentType.toUpperCase()}
+                                      {link.contentType === "asian" ? "ASIAN" :
+                                       link.contentType === "western" ? "WESTERN" :
+                                       link.contentType === "banned" ? "BANNED" :
+                                       link.contentType === "vip" ? "VIP" : ""}
                                     </span>
                                   )}
+                                  
                                   <span
                                     className={`inline-flex items-center px-2 sm:px-4 py-1 sm:py-2 text-xs sm:text-sm font-medium rounded-full border backdrop-blur-sm font-roboto ${
                                       isDark ? "bg-gray-700/70 text-gray-300 border-gray-600/50" : "bg-gray-200/70 text-gray-700 border-gray-300/50"

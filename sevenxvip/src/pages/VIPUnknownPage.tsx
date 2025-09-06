@@ -3,7 +3,7 @@ import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Helmet } from "react-helmet";
-import { Crown, Plus, Star, Sparkles, HelpCircle, Eye } from "lucide-react";
+import { Crown, Plus, Star, Sparkles, HelpCircle, Eye, Globe, MapPin } from "lucide-react";
 import { useTheme } from "../contexts/ThemeContext";
 import MonthFilter from "../components/MonthFilter";
 import SortFilter, { SortValue } from "../components/SortFilter";
@@ -18,6 +18,14 @@ type LinkItem = {
   createdAt: string;
   contentType?: string;
   region: string;
+  link?: string;
+  link2?: string;
+  linkP?: string;
+  linkG?: string;
+  linkMV1?: string;
+  linkMV2?: string;
+  linkMV3?: string;
+  linkMV4?: string;
 };
 
 type Category = {
@@ -82,7 +90,7 @@ const VIPUnknownPage: React.FC = () => {
       if (searchName) params.append("search", searchName);
       if (selectedCategory) params.append("category", selectedCategory);
       if (selectedRegion) params.append("region", selectedRegion);
-      if (selectedMonth) params.append("month", selectedMonth);
+      if (dateFilter !== "all") params.append("dateFilter", dateFilter);
       if (dateFilter !== "all") params.append("dateFilter", dateFilter);
 
       const response = await axios.get(
@@ -98,9 +106,9 @@ const VIPUnknownPage: React.FC = () => {
       if (!response.data?.data) throw new Error("Invalid server response");
 
       const decoded = decodeModifiedBase64<{ data: LinkItem[]; totalPages: number }>(
-        response.data.data
+      // Filter VIP unknown content from all VIP sources
       );
-
+        item.contentType && item.contentType.startsWith('vip') && item.category === "Unknown"
       const { data: rawData, totalPages } = decoded;
 
       if (isLoadMore) {
@@ -227,7 +235,7 @@ const VIPUnknownPage: React.FC = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.4 }}
           >
-            Unknown abg/asian models
+            VIP Unknown content from all sources
           </motion.p>
         </motion.div>
 
@@ -267,6 +275,43 @@ const VIPUnknownPage: React.FC = () => {
             </div>
 
             <div className="flex items-center gap-2">
+              {/* Region Filter */}
+              <div className="flex items-center gap-1 bg-gray-800/50 rounded-lg p-1">
+                <button
+                  onClick={() => setSelectedRegion("")}
+                  className={`px-3 py-2 rounded-md text-sm font-medium transition-all duration-200 flex items-center gap-2 ${
+                    selectedRegion === ""
+                      ? "bg-yellow-500 text-black shadow-lg"
+                      : "text-gray-300 hover:text-white hover:bg-gray-700/50"
+                  }`}
+                >
+                  <Globe className="w-4 h-4" />
+                  All
+                </button>
+                <button
+                  onClick={() => setSelectedRegion("western")}
+                  className={`px-3 py-2 rounded-md text-sm font-medium transition-all duration-200 flex items-center gap-2 ${
+                    selectedRegion === "western"
+                      ? "bg-orange-500 text-white shadow-lg"
+                      : "text-gray-300 hover:text-white hover:bg-gray-700/50"
+                  }`}
+                >
+                  <Globe className="w-4 h-4" />
+                  Western
+                </button>
+                <button
+                  onClick={() => setSelectedRegion("asian")}
+                  className={`px-3 py-2 rounded-md text-sm font-medium transition-all duration-200 flex items-center gap-2 ${
+                    selectedRegion === "asian"
+                      ? "bg-purple-500 text-white shadow-lg"
+                      : "text-gray-300 hover:text-white hover:bg-gray-700/50"
+                  }`}
+                >
+                  <MapPin className="w-4 h-4" />
+                  Asian
+                </button>
+              </div>
+
               <MonthFilter selectedMonth={selectedMonth} onMonthChange={setSelectedMonth} themeColor="yellow" />
 
               <SortFilter selected={sortOption} onChange={setSortOption} themeColor="yellow" />
@@ -298,9 +343,9 @@ const VIPUnknownPage: React.FC = () => {
                       <Crown className="w-5 h-5 text-yellow-400 animate-pulse" />
                       <HelpCircle className="w-4 h-4 text-gray-400" />
                       <span className="bg-gradient-to-r from-yellow-400 to-gray-400 bg-clip-text text-transparent">
-                        VIP Unknown - {date}
-                      </span>
-                      <Sparkles className="w-4 h-4 text-yellow-300" />
+                      <HelpCircle className="w-4 h-4 text-gray-400" />
+                      <span className="bg-gradient-to-r from-yellow-400 to-gray-400 bg-clip-text text-transparent">VIP Unknown - {date}</span>
+                      <Eye className="w-4 h-4 text-gray-300" />
                     </h2>
                     <div className="space-y-2">
                       {posts
@@ -321,7 +366,7 @@ const VIPUnknownPage: React.FC = () => {
                                 : "bg-white/60 hover:bg-gray-50/80 border-yellow-400/40 hover:border-gray-400/60 hover:shadow-gray-400/20"
                             } border`}
                             onClick={() => {
-                              const contentType = link.contentType || "vip-unknown";
+                              const ct = link.contentType || "vip-unknown";
                               switch (contentType) {
                                 case "vip-asian":
                                   navigate(`/vip-asian/${link.slug}`);
@@ -330,7 +375,7 @@ const VIPUnknownPage: React.FC = () => {
                                   navigate(`/vip-western/${link.slug}`);
                                   break;
                                 case "vip-banned":
-                                  navigate(`/vip-banned/${link.slug}`);
+                                  navigate(`/vip-unknown/${link.slug}`);
                                   break;
                                 case "vip-unknown":
                                   navigate(`/vip-unknown/${link.slug}`);
@@ -354,7 +399,7 @@ const VIPUnknownPage: React.FC = () => {
                                 </h3>
                               </div>
                               <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
-                                {recentLinks.includes(link) && (
+                                {recentIds.has(link.id) && (
                                   <span
                                     className={`inline-flex items-center px-2 sm:px-4 py-1 sm:py-2 text-white text-xs font-bold rounded-full shadow-lg animate-pulse border font-roboto ${
                                       isDark
@@ -367,7 +412,7 @@ const VIPUnknownPage: React.FC = () => {
                                   </span>
                                 )}
 
-                                {link.contentType && link.contentType !== "vip-unknown" && (
+                                {link.contentType && (
                                   <span
                                     className={`inline-flex items-center px-3 py-1 text-xs font-bold rounded-full ${
                                       link.contentType === "vip-asian"
@@ -376,10 +421,12 @@ const VIPUnknownPage: React.FC = () => {
                                         ? "bg-orange-500/20 text-orange-300 border border-orange-500/30"
                                         : link.contentType === "vip-banned"
                                         ? "bg-red-500/20 text-red-300 border border-red-500/30"
-                                        : ""
+                                        : "bg-gray-500/20 text-gray-300 border border-gray-500/30"
                                     }`}
                                   >
-                                    {link.contentType.replace("vip-", "").toUpperCase()}
+                                    {link.contentType === "vip-asian" ? "ASIAN" :
+                                     link.contentType === "vip-western" ? "WESTERN" :
+                                     link.contentType === "vip-banned" ? "BANNED" : "UNKNOWN"}
                                   </span>
                                 )}
 
@@ -434,7 +481,7 @@ const VIPUnknownPage: React.FC = () => {
               <h3 className={`text-3xl font-bold mb-4 font-orbitron ${isDark ? "text-white" : "text-gray-900"}`}>
                 No VIP Unknown Content Found
               </h3>
-              <p className="text-gray-400 text-lg font-roboto">
+              <p className="text-gray-400 text-lg font-roboto">Try adjusting your search or filters to find premium unknown content.</p>
                 Try adjusting your search or filters to find premium unknown content.
               </p>
             </div>

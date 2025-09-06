@@ -16,6 +16,14 @@ type LinkItem = {
   thumbnail?: string;
   createdAt: string;
   contentType?: string;
+  link?: string;
+  link2?: string;
+  linkP?: string;
+  linkG?: string;
+  linkMV1?: string;
+  linkMV2?: string;
+  linkMV3?: string;
+  linkMV4?: string;
 };
 
 type Category = {
@@ -96,7 +104,7 @@ const AsianPage: React.FC = () => {
 
       const { data: allData, totalPages } = decoded;
       
-      // Show all content but mark content types for proper navigation
+      // Show all content and mark content types for proper navigation
       const rawData = allData.map(item => ({
         ...item,
         contentType: item.category === "Banned" ? "banned" :
